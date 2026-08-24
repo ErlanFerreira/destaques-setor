@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+local.db
+venv/
+.venv/
+.claude/
+
+# planilhas com dados reais de funcionarios nao devem ir para o repositorio
+*.xlsx

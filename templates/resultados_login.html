@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resultados - Destaque do Setor</title>
+<link rel="icon" type="image/png" href="/static/favicon-hex.png">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div class="app-shell">
+  <main class="card">
+    <img src="/static/logo-transrota.png" alt="Grupo Transrota" class="logo">
+    <h1>Resultados</h1>
+    <p class="subtitle">Digite a senha para ver os destaques escolhidos.</p>
+
+    <form method="post" action="/resultados">
+      <div class="campo">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" name="senha" required autofocus>
+      </div>
+      {% if erro %}
+      <div class="msg erro">{{ erro }}</div>
+      {% endif %}
+      <button type="submit">Entrar</button>
+    </form>
+  </main>
+</div>
+</body>
+</html>

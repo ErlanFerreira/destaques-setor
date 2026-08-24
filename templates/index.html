@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Destaque do Setor</title>
+<link rel="icon" type="image/png" href="/static/favicon-hex.png">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div class="app-shell">
+  <main class="card">
+    <img src="/static/logo-transrota.png" alt="Grupo Transrota" class="logo">
+    <h1>Destaque do Setor</h1>
+    <p class="subtitle">Escolha o colaborador destaque da sua equipe nesta rodada.</p>
+
+    <form id="form-voto" novalidate>
+      <div class="campo">
+        <label for="setor">1. Seu setor</label>
+        <select id="setor" required>
+          <option value="" disabled selected>Selecione o setor</option>
+          {% for s in setores %}
+          <option value="{{ s.id }}">{{ s.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="campo" id="bloco-lider" hidden>
+        <label for="lider">2. Seu nome (líder)</label>
+        <select id="lider" required>
+          <option value="" disabled selected>Selecione seu nome</option>
+        </select>
+      </div>
+
+      <div class="campo" id="bloco-funcionarios" hidden>
+        <label>3. Destaque do setor</label>
+        <div id="lista-funcionarios" class="lista-radio"></div>
+      </div>
+
+      <div id="msg" class="msg" hidden></div>
+
+      <button type="submit" id="btn-enviar" disabled>Confirmar destaque</button>
+    </form>
+
+    <div id="sucesso" class="sucesso" hidden>
+      <h2>Voto registrado!</h2>
+      <p>Obrigado por indicar o destaque do seu setor.</p>
+    </div>
+  </main>
+</div>
+<script src="/static/form.js"></script>
+</body>
+</html>

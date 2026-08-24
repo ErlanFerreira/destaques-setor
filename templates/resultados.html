@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resultados - Destaque do Setor</title>
+<link rel="icon" type="image/png" href="/static/favicon-hex.png">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div class="app-shell">
+  <main class="card card-larga">
+    <img src="/static/logo-transrota.png" alt="Grupo Transrota" class="logo">
+    <h1>Resultados</h1>
+    {% if not grupos %}
+    <p class="subtitle">Nenhum voto registrado ainda.</p>
+    {% else %}
+    {% for grupo in grupos %}
+    <section class="grupo-setor">
+      <h2>{{ grupo.setor }}</h2>
+      <table class="tabela-resultados">
+        <thead>
+          <tr><th>Líder</th><th>Destaque escolhido</th><th>Data</th></tr>
+        </thead>
+        <tbody>
+          {% for item in grupo.itens %}
+          <tr>
+            <td>{{ item.lider }}</td>
+            <td>{{ item.destaque }}</td>
+            <td>{{ item.data }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    {% endfor %}
+    {% endif %}
+  </main>
+</div>
+</body>
+</html>
