@@ -25,9 +25,8 @@ templates = Jinja2Templates(directory="templates")
 
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request, db: Session = Depends(get_db)):
-    setores = db.query(Setor).order_by(Setor.nome.asc()).all()
-    return templates.TemplateResponse("index.html", {"request": request, "setores": setores})
+def index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.get("/api/lideres")
@@ -39,6 +38,12 @@ def api_lideres(setor_id: int, db: Session = Depends(get_db)):
         .all()
     )
     return {"lideres": [{"id": r.id, "nome": r.nome} for r in rows]}
+
+
+@app.get("/api/lideres/todos")
+def api_lideres_todos(db: Session = Depends(get_db)):
+    rows = db.query(Lider).join(Setor, Lider.setor_id == Setor.id).order_by(Lider.nome.asc()).all()
+    return {"lideres": [{"id": r.id, "nome": r.nome, "setor": r.setor.nome} for r in rows]}
 
 
 @app.get("/api/funcionarios")

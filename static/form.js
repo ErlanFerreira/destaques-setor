@@ -1,12 +1,15 @@
-const setorSel = document.getElementById("setor");
-const blocoLider = document.getElementById("bloco-lider");
-const liderSel = document.getElementById("lider");
+const liderInput = document.getElementById("lider-nome");
+const lideresLista = document.getElementById("lideres-lista");
+const liderConfirmacao = document.getElementById("lider-confirmacao");
 const blocoFuncionarios = document.getElementById("bloco-funcionarios");
 const listaFuncionarios = document.getElementById("lista-funcionarios");
 const btnEnviar = document.getElementById("btn-enviar");
 const msgEl = document.getElementById("msg");
 const form = document.getElementById("form-voto");
 const sucessoEl = document.getElementById("sucesso");
+
+let lideres = [];
+let liderAtual = null;
 
 function mostrarErro(texto) {
   msgEl.textContent = texto;
@@ -18,42 +21,48 @@ function limparErro() {
   msgEl.hidden = true;
 }
 
-function resetAPartirDe(nivel) {
-  if (nivel <= 1) {
-    blocoLider.hidden = true;
-    liderSel.innerHTML = '<option value="" disabled selected>Selecione seu nome</option>';
-  }
-  if (nivel <= 2) {
-    blocoFuncionarios.hidden = true;
-    listaFuncionarios.innerHTML = "";
-  }
+function limparFuncionarios() {
+  blocoFuncionarios.hidden = true;
+  listaFuncionarios.innerHTML = "";
   btnEnviar.disabled = true;
 }
 
-setorSel.addEventListener("change", async () => {
-  limparErro();
-  resetAPartirDe(1);
-  const setorId = setorSel.value;
-  if (!setorId) return;
+function normalizar(texto) {
+  return texto.trim().toLowerCase();
+}
 
-  const resp = await fetch(`/api/lideres?setor_id=${setorId}`);
+(async function carregarLideres() {
+  const resp = await fetch("/api/lideres/todos");
   const data = await resp.json();
-  for (const l of data.lideres) {
+  lideres = data.lideres;
+  for (const l of lideres) {
     const opt = document.createElement("option");
-    opt.value = l.id;
-    opt.textContent = l.nome;
-    liderSel.appendChild(opt);
+    opt.value = l.nome;
+    lideresLista.appendChild(opt);
   }
-  blocoLider.hidden = false;
-});
+})();
 
-liderSel.addEventListener("change", async () => {
+liderInput.addEventListener("input", async () => {
   limparErro();
-  resetAPartirDe(2);
-  const liderId = liderSel.value;
-  if (!liderId) return;
+  liderConfirmacao.hidden = true;
+  limparFuncionarios();
+  liderAtual = null;
 
-  const resp = await fetch(`/api/funcionarios?lider_id=${liderId}`);
+  const valor = normalizar(liderInput.value);
+  if (!valor) return;
+
+  const encontrados = lideres.filter((l) => normalizar(l.nome) === valor);
+  if (encontrados.length === 0) return;
+  if (encontrados.length > 1) {
+    mostrarErro("Encontrei mais de um líder com esse nome, fale com o administrador.");
+    return;
+  }
+
+  liderAtual = encontrados[0];
+  liderConfirmacao.textContent = `Setor: ${liderAtual.setor}`;
+  liderConfirmacao.hidden = false;
+
+  const resp = await fetch(`/api/funcionarios?lider_id=${liderAtual.id}`);
   const data = await resp.json();
   listaFuncionarios.innerHTML = "";
   for (const f of data.funcionarios) {
@@ -76,14 +85,14 @@ form.addEventListener("submit", async (ev) => {
   ev.preventDefault();
   limparErro();
   const funcionarioInput = listaFuncionarios.querySelector("input:checked");
-  if (!liderSel.value || !funcionarioInput) return;
+  if (!liderAtual || !funcionarioInput) return;
 
   btnEnviar.disabled = true;
   const resp = await fetch("/api/votos", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      lider_id: Number(liderSel.value),
+      lider_id: liderAtual.id,
       funcionario_id: Number(funcionarioInput.value),
     }),
   });
