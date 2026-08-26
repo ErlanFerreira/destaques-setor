@@ -1,9 +1,11 @@
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import config
@@ -11,6 +13,10 @@ from .db import get_db
 from .models import Funcionario, Lider, Setor, Voto
 from .security import COOKIE_MAX_AGE, COOKIE_NAME, cookie_resultados_valido, criar_cookie_resultados
 from .seed import init_db
+
+
+def normalizar_cpf(valor: str) -> str:
+    return re.sub(r"\D", "", valor or "")
 
 
 @asynccontextmanager
@@ -29,21 +35,22 @@ def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
-@app.get("/api/lideres")
-def api_lideres(setor_id: int, db: Session = Depends(get_db)):
-    rows = (
+@app.post("/api/lideres/verificar")
+def api_lideres_verificar(payload: dict, db: Session = Depends(get_db)):
+    nome = (payload.get("nome") or "").strip()
+    cpf = normalizar_cpf(payload.get("cpf") or "")
+    if not nome or not cpf:
+        return JSONResponse({"erro": "Informe seu nome completo e CPF."}, status_code=400)
+
+    lider = (
         db.query(Lider)
-        .filter(Lider.setor_id == setor_id)
-        .order_by(Lider.nome.asc())
-        .all()
+        .filter(func.lower(Lider.nome) == nome.lower(), Lider.cpf == cpf)
+        .first()
     )
-    return {"lideres": [{"id": r.id, "nome": r.nome} for r in rows]}
+    if not lider:
+        return JSONResponse({"erro": "Nome ou CPF não conferem com o cadastro."}, status_code=404)
 
-
-@app.get("/api/lideres/todos")
-def api_lideres_todos(db: Session = Depends(get_db)):
-    rows = db.query(Lider).join(Setor, Lider.setor_id == Setor.id).order_by(Lider.nome.asc()).all()
-    return {"lideres": [{"id": r.id, "nome": r.nome, "setor": r.setor.nome} for r in rows]}
+    return {"id": lider.id, "nome": lider.nome, "setor": lider.setor.nome}
 
 
 @app.get("/api/funcionarios")

@@ -21,6 +21,7 @@ class Lider(Base):
 
     id = Column(Integer, primary_key=True)
     nome = Column(String(255), nullable=False)
+    cpf = Column(String(11), nullable=False, index=True)
     setor_id = Column(Integer, ForeignKey("setores.id"), nullable=False)
 
     setor = relationship("Setor", back_populates="lideres")

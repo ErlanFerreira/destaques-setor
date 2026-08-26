@@ -1,14 +1,15 @@
 # Destaque do Setor
 
 Formulário público (sem login) para que cada líder escolha o colaborador
-destaque da sua equipe. O líder acessa o link, seleciona seu setor, seleciona
-seu nome (dentre os líderes daquele setor) e escolhe o destaque entre os
-liderados que aparecem automaticamente.
+destaque da sua equipe. O líder acessa o link, digita seu nome completo e
+CPF (conferidos contra o cadastro) e escolhe o destaque entre os liderados
+que aparecem automaticamente.
 
 ## Como funciona
 
-1. Você importa uma planilha com a relação `setor / líder / funcionário`
-   (uma linha por funcionário) usando `scripts/importar_planilha.py`.
+1. Você importa uma planilha com a relação `setor / líder / CPF do líder /
+   funcionário` (uma linha por funcionário) usando
+   `scripts/importar_planilha.py`.
 2. Você compartilha o link do formulário com os líderes.
 3. Cada líder só pode votar uma vez (tentativa de votar de novo mostra aviso).
 4. Você acompanha os votos em `/resultados` — a página pede uma senha (definida
@@ -35,9 +36,10 @@ Sem `DATABASE_URL` preenchido, usa um arquivo SQLite local (`local.db`).
 python scripts/importar_planilha.py caminho/para/planilha.xlsx
 ```
 
-A planilha precisa ter cabeçalho com as colunas `setor`, `lider`,
-`funcionario` (uma linha por funcionário). Pode rodar de novo com uma
-planilha atualizada — não duplica quem já existe.
+A planilha precisa ter cabeçalho com as colunas `setor`, `lider`, `cpf`,
+`funcionario` (uma linha por funcionário; `cpf` é o CPF do líder daquela
+linha, com ou sem pontuação). Pode rodar de novo com uma planilha
+atualizada — não duplica quem já existe, e atualiza o CPF se ele mudar.
 
 ## Deploy (Vercel + Neon)
 

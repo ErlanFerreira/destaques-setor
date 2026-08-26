@@ -1,5 +1,5 @@
-const liderInput = document.getElementById("lider-nome");
-const lideresLista = document.getElementById("lideres-lista");
+const liderNomeInput = document.getElementById("lider-nome");
+const liderCpfInput = document.getElementById("lider-cpf");
 const liderConfirmacao = document.getElementById("lider-confirmacao");
 const blocoFuncionarios = document.getElementById("bloco-funcionarios");
 const listaFuncionarios = document.getElementById("lista-funcionarios");
@@ -8,7 +8,6 @@ const msgEl = document.getElementById("msg");
 const form = document.getElementById("form-voto");
 const sucessoEl = document.getElementById("sucesso");
 
-let lideres = [];
 let liderAtual = null;
 
 function mostrarErro(texto) {
@@ -27,55 +26,72 @@ function limparFuncionarios() {
   btnEnviar.disabled = true;
 }
 
-function normalizar(texto) {
-  return texto.trim().toLowerCase();
+function formatarCpf(valor) {
+  const digitos = valor.replace(/\D/g, "").slice(0, 11);
+  const partes = [digitos.slice(0, 3), digitos.slice(3, 6), digitos.slice(6, 9), digitos.slice(9, 11)];
+  let formatado = partes[0];
+  if (partes[1]) formatado += "." + partes[1];
+  if (partes[2]) formatado += "." + partes[2];
+  if (partes[3]) formatado += "-" + partes[3];
+  return formatado;
 }
 
-(async function carregarLideres() {
-  const resp = await fetch("/api/lideres/todos");
-  const data = await resp.json();
-  lideres = data.lideres;
-  for (const l of lideres) {
-    const opt = document.createElement("option");
-    opt.value = l.nome;
-    lideresLista.appendChild(opt);
-  }
-})();
+liderCpfInput.addEventListener("input", () => {
+  liderCpfInput.value = formatarCpf(liderCpfInput.value);
+  tentarVerificar();
+});
 
-liderInput.addEventListener("input", async () => {
-  limparErro();
+liderNomeInput.addEventListener("input", () => {
+  liderAtual = null;
   liderConfirmacao.hidden = true;
   limparFuncionarios();
-  liderAtual = null;
+  tentarVerificar();
+});
 
-  const valor = normalizar(liderInput.value);
-  if (!valor) return;
-
-  const encontrados = lideres.filter((l) => normalizar(l.nome) === valor);
-  if (encontrados.length === 0) return;
-  if (encontrados.length > 1) {
-    mostrarErro("Encontrei mais de um líder com esse nome, fale com o administrador.");
+async function tentarVerificar() {
+  limparErro();
+  const nome = liderNomeInput.value.trim();
+  const cpf = liderCpfInput.value.replace(/\D/g, "");
+  if (!nome || cpf.length !== 11) {
+    liderAtual = null;
+    liderConfirmacao.hidden = true;
+    limparFuncionarios();
     return;
   }
 
-  liderAtual = encontrados[0];
+  const resp = await fetch("/api/lideres/verificar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nome, cpf }),
+  });
+  const data = await resp.json();
+
+  if (!resp.ok) {
+    liderAtual = null;
+    liderConfirmacao.hidden = true;
+    limparFuncionarios();
+    mostrarErro(data.erro || "Não foi possível verificar seus dados.");
+    return;
+  }
+
+  liderAtual = data;
   liderConfirmacao.textContent = `Setor: ${liderAtual.setor}`;
   liderConfirmacao.hidden = false;
 
-  const resp = await fetch(`/api/funcionarios?lider_id=${liderAtual.id}`);
-  const data = await resp.json();
+  const funcResp = await fetch(`/api/funcionarios?lider_id=${liderAtual.id}`);
+  const funcData = await funcResp.json();
   listaFuncionarios.innerHTML = "";
-  for (const f of data.funcionarios) {
+  for (const f of funcData.funcionarios) {
     const label = document.createElement("label");
     label.className = "opcao-radio";
     label.innerHTML = `<input type="radio" name="funcionario" value="${f.id}"> <span>${f.nome}</span>`;
     listaFuncionarios.appendChild(label);
   }
-  blocoFuncionarios.hidden = data.funcionarios.length === 0;
-  if (data.funcionarios.length === 0) {
+  blocoFuncionarios.hidden = funcData.funcionarios.length === 0;
+  if (funcData.funcionarios.length === 0) {
     mostrarErro("Nenhum liderado cadastrado para este líder.");
   }
-});
+}
 
 listaFuncionarios.addEventListener("change", () => {
   btnEnviar.disabled = !listaFuncionarios.querySelector("input:checked");

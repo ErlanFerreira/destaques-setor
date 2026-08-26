@@ -17,13 +17,17 @@
     <form id="form-voto" novalidate>
       <div class="campo">
         <label for="lider-nome">1. Seu nome completo (líder)</label>
-        <input type="text" id="lider-nome" list="lideres-lista" autocomplete="off" placeholder="Digite seu nome completo" required>
-        <datalist id="lideres-lista"></datalist>
+        <input type="text" id="lider-nome" autocomplete="off" placeholder="Digite seu nome completo" required>
+      </div>
+
+      <div class="campo">
+        <label for="lider-cpf">2. Seu CPF</label>
+        <input type="text" id="lider-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" required>
         <p id="lider-confirmacao" class="hint" hidden></p>
       </div>
 
       <div class="campo" id="bloco-funcionarios" hidden>
-        <label>2. Destaque do setor</label>
+        <label>3. Destaque do setor</label>
         <div id="lista-funcionarios" class="lista-radio"></div>
       </div>
 

@@ -4,11 +4,13 @@ Uso:
     python scripts/importar_planilha.py caminho/para/planilha.xlsx
 
 A planilha deve ter uma linha de cabecalho com as colunas (em qualquer ordem):
-    setor | lider | funcionario
+    setor | lider | cpf | funcionario
 
-Cada linha representa um funcionario, associado ao seu lider e setor.
+Cada linha representa um funcionario, associado ao seu lider, setor e ao CPF
+do lider (usado para o lider se identificar no formulario).
 Rodar mais de uma vez com a mesma planilha e seguro (nao duplica registros).
 """
+import re
 import sys
 from pathlib import Path
 
@@ -25,6 +27,10 @@ def normalizar(valor):
     return (str(valor).strip() if valor is not None else "")
 
 
+def normalizar_cpf(valor):
+    return re.sub(r"\D", "", str(valor)) if valor is not None else ""
+
+
 def importar(caminho_planilha: str):
     init_db()
     wb = openpyxl.load_workbook(caminho_planilha, data_only=True)
@@ -34,9 +40,10 @@ def importar(caminho_planilha: str):
     try:
         idx_setor = cabecalho.index("setor")
         idx_lider = cabecalho.index("lider")
+        idx_cpf = cabecalho.index("cpf")
         idx_funcionario = cabecalho.index("funcionario")
     except ValueError:
-        raise SystemExit("A planilha precisa ter as colunas: setor, lider, funcionario")
+        raise SystemExit("A planilha precisa ter as colunas: setor, lider, cpf, funcionario")
 
     db = SessionLocal()
     setores_cache = {}
@@ -50,8 +57,9 @@ def importar(caminho_planilha: str):
                 continue
             nome_setor = normalizar(row[idx_setor])
             nome_lider = normalizar(row[idx_lider])
+            cpf_lider = normalizar_cpf(row[idx_cpf])
             nome_funcionario = normalizar(row[idx_funcionario])
-            if not nome_setor or not nome_lider or not nome_funcionario:
+            if not nome_setor or not nome_lider or not cpf_lider or not nome_funcionario:
                 continue
 
             setor = setores_cache.get(nome_setor)
@@ -73,10 +81,12 @@ def importar(caminho_planilha: str):
                     .first()
                 )
                 if not lider:
-                    lider = Lider(nome=nome_lider, setor_id=setor.id)
+                    lider = Lider(nome=nome_lider, setor_id=setor.id, cpf=cpf_lider)
                     db.add(lider)
                     db.flush()
                     n_lideres += 1
+                elif lider.cpf != cpf_lider:
+                    lider.cpf = cpf_lider
                 lideres_cache[chave_lider] = lider
 
             chave_funcionario = (chave_lider, nome_funcionario)
