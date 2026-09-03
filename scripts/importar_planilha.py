@@ -7,7 +7,9 @@ A planilha deve ter uma linha de cabecalho com as colunas (em qualquer ordem):
     setor | lider | cpf | funcionario
 
 Cada linha representa um funcionario, associado ao seu lider, setor e ao CPF
-do lider (usado para o lider se identificar no formulario).
+do lider (usado para o lider se identificar no formulario). O CPF e a chave
+unica do lider: se o mesmo CPF aparecer em setores diferentes, e tratado
+como o mesmo lider (liderando varios setores, com um unico voto).
 Rodar mais de uma vez com a mesma planilha e seguro (nao duplica registros).
 """
 import re
@@ -72,28 +74,27 @@ def importar(caminho_planilha: str):
                     n_setores += 1
                 setores_cache[nome_setor] = setor
 
-            chave_lider = (nome_setor, nome_lider)
-            lider = lideres_cache.get(chave_lider)
+            lider = lideres_cache.get(cpf_lider)
             if not lider:
-                lider = (
-                    db.query(Lider)
-                    .filter(Lider.nome == nome_lider, Lider.setor_id == setor.id)
-                    .first()
-                )
+                lider = db.query(Lider).filter(Lider.cpf == cpf_lider).first()
                 if not lider:
-                    lider = Lider(nome=nome_lider, setor_id=setor.id, cpf=cpf_lider)
+                    lider = Lider(nome=nome_lider, cpf=cpf_lider)
                     db.add(lider)
                     db.flush()
                     n_lideres += 1
-                elif lider.cpf != cpf_lider:
-                    lider.cpf = cpf_lider
-                lideres_cache[chave_lider] = lider
+                elif lider.nome != nome_lider:
+                    lider.nome = nome_lider
+                lideres_cache[cpf_lider] = lider
 
-            chave_funcionario = (chave_lider, nome_funcionario)
+            chave_funcionario = (setor.id, lider.id, nome_funcionario)
             if chave_funcionario not in funcionarios_cache:
                 existente = (
                     db.query(Funcionario)
-                    .filter(Funcionario.nome == nome_funcionario, Funcionario.lider_id == lider.id)
+                    .filter(
+                        Funcionario.nome == nome_funcionario,
+                        Funcionario.setor_id == setor.id,
+                        Funcionario.lider_id == lider.id,
+                    )
                     .first()
                 )
                 if not existente:

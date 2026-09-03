@@ -75,7 +75,7 @@ async function tentarVerificar() {
   }
 
   liderAtual = data;
-  liderConfirmacao.textContent = `Setor: ${liderAtual.setor}`;
+  liderConfirmacao.textContent = `Setor(es): ${liderAtual.setor}`;
   liderConfirmacao.hidden = false;
 
   const funcResp = await fetch(`/api/funcionarios?lider_id=${liderAtual.id}`);

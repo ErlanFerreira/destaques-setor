@@ -50,7 +50,8 @@ def api_lideres_verificar(payload: dict, db: Session = Depends(get_db)):
     if not lider:
         return JSONResponse({"erro": "Nome ou CPF não conferem com o cadastro."}, status_code=404)
 
-    return {"id": lider.id, "nome": lider.nome, "setor": lider.setor.nome}
+    setores = sorted({f.setor.nome for f in lider.funcionarios})
+    return {"id": lider.id, "nome": lider.nome, "setor": ", ".join(setores)}
 
 
 @app.get("/api/funcionarios")
@@ -99,14 +100,15 @@ def resultados(request: Request, db: Session = Depends(get_db)):
     votos = (
         db.query(Voto)
         .join(Lider, Voto.lider_id == Lider.id)
-        .join(Setor, Lider.setor_id == Setor.id)
+        .join(Funcionario, Voto.funcionario_id == Funcionario.id)
+        .join(Setor, Funcionario.setor_id == Setor.id)
         .order_by(Setor.nome.asc(), Lider.nome.asc())
         .all()
     )
 
     setores = {}
     for v in votos:
-        setor_nome = v.lider.setor.nome
+        setor_nome = v.funcionario.setor.nome
         setores.setdefault(setor_nome, []).append(
             {
                 "lider": v.lider.nome,

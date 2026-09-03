@@ -12,7 +12,6 @@ class Setor(Base):
     id = Column(Integer, primary_key=True)
     nome = Column(String(120), unique=True, nullable=False)
 
-    lideres = relationship("Lider", back_populates="setor")
     funcionarios = relationship("Funcionario", back_populates="setor")
 
 
@@ -21,10 +20,8 @@ class Lider(Base):
 
     id = Column(Integer, primary_key=True)
     nome = Column(String(255), nullable=False)
-    cpf = Column(String(11), nullable=False, index=True)
-    setor_id = Column(Integer, ForeignKey("setores.id"), nullable=False)
+    cpf = Column(String(11), unique=True, nullable=False, index=True)
 
-    setor = relationship("Setor", back_populates="lideres")
     funcionarios = relationship("Funcionario", back_populates="lider")
 
 
